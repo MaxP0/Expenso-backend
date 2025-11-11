@@ -1,0 +1,11 @@
+<h1>Welcome<%= ", #{current_user.email}" if user_signed_in? %>!</h1>
+
+<% if user_signed_in? %>
+  <p>Your role: <%= current_user.role %></p>
+  <%= button_to 'Logout', destroy_user_session_path, method: :delete, class: "btn btn-danger" %>
+<% else %>
+  <p>Please sign in </p>
+  <%= link_to 'Login', new_user_session_path, class: "btn btn-primary" %>
+  <p>or create a new account:</p>
+  <%= link_to 'Sign Up', new_user_registration_path, class: "btn btn-success" %>
+<% end %>
