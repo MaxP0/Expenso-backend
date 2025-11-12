@@ -18,7 +18,9 @@ class ExpenseReportsController < ApplicationController
   end
 
   def edit
-    redirect_to @expense_report, alert: "You can't edit this report" unless @expense_report.draft?
+    unless @expense_report.draft? && @expense_report.user == current_user
+      redirect_to @expense_report, alert: "You can't edit this report"
+    end
   end
 
   def create
@@ -33,7 +35,7 @@ class ExpenseReportsController < ApplicationController
   end
 
   def update
-    if @expense_report.draft? && @expense_report.update(expense_report_params)
+    if @expense_report.draft? && @expense_report.user == current_user && @expense_report.update(expense_report_params)
       redirect_to @expense_report, notice: "Report updated."
     else
       redirect_to @expense_report, alert: "Cannot edit a submitted report."
@@ -41,13 +43,17 @@ class ExpenseReportsController < ApplicationController
   end
 
   def destroy
-    @expense_report.destroy
-    redirect_to expense_reports_url, notice: "Expense report deleted."
+    if @expense_report.user == current_user && @expense_report.draft?
+      @expense_report.destroy
+      redirect_to expense_reports_url, notice: "Expense report deleted."
+    else
+      redirect_to expense_reports_url, alert: "Action not allowed."
+    end
   end
 
   # Custom actions
   def submit
-    if current_user.employee? && @expense_report.draft?
+    if current_user.employee? && @expense_report.draft? && @expense_report.user == current_user
       @expense_report.update(status: :submitted)
       redirect_to expense_reports_path, notice: "Report submitted successfully."
     else
@@ -56,7 +62,7 @@ class ExpenseReportsController < ApplicationController
   end
 
   def approve
-    if current_user.admin?
+    if current_user.manager?
       @expense_report.update(status: :approved)
       flash[:notice] = "Report approved and sent to accounting department."
       redirect_to expense_reports_path
@@ -66,7 +72,7 @@ class ExpenseReportsController < ApplicationController
   end
 
   def reject
-    if current_user.admin?
+    if current_user.manager?
       @expense_report.update(status: :rejected)
       redirect_to expense_reports_path, notice: "Report rejected."
     else
@@ -81,6 +87,6 @@ class ExpenseReportsController < ApplicationController
   end
 
   def expense_report_params
-    params.require(:expense_report).permit(:title, :category, :amount, :date, :description, :receipt)
+  params.require(:expense_report).permit(:title, :category, :amount, :date, :description, :receipt)
   end
 end

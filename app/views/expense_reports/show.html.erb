@@ -1,25 +1,42 @@
-<h2><%= @expense_report.title %></h2>
+<h1>Expense Report Details</h1>
+
+<p><strong>Title:</strong> <%= @expense_report.title %></p>
 <p><strong>Category:</strong> <%= @expense_report.category %></p>
-<p><strong>Amount:</strong> €<%= @expense_report.amount %></p>
+<p><strong>Amount (€):</strong> <%= @expense_report.amount %></p>
 <p><strong>Date:</strong> <%= @expense_report.date %></p>
-<p><strong>Status:</strong> <%= @expense_report.status %></p>
 <p><strong>Description:</strong> <%= @expense_report.description %></p>
+
+<p>
+  <strong>Status:</strong>
+  <% status_class = case @expense_report.status
+    when "draft" then "badge bg-secondary"
+    when "submitted" then "badge bg-info text-dark"
+    when "approved" then "badge bg-success"
+    when "rejected" then "badge bg-danger"
+  end %>
+  <span class="<%= status_class %>"><%= @expense_report.status %></span>
+</p>
 
 <% if @expense_report.receipt.attached? %>
   <p><strong>Receipt:</strong></p>
-  <%= image_tag @expense_report.receipt, style: "max-width: 300px;" %>
+  <%= image_tag @expense_report.receipt, style: "max-width: 300px; border-radius: 8px;" %>
+<% else %>
+  <p><em>No receipt uploaded</em></p>
 <% end %>
 
 <hr>
 
 <% if current_user.employee? && @expense_report.draft? %>
-  <%= button_to "Submit", submit_expense_report_path(@expense_report), method: :post, class: "btn btn-primary" %>
-  <%= link_to "Edit", edit_expense_report_path(@expense_report), class: "btn btn-secondary" %>
-<% end %>
-
-<% if current_user.admin? && @expense_report.submitted? %>
-  <%= button_to "Approve", approve_expense_report_path(@expense_report), method: :post, class: "btn btn-success" %>
-  <%= button_to "Reject", reject_expense_report_path(@expense_report), method: :post, class: "btn btn-danger" %>
+  <% if @expense_report.user == current_user %>
+    <%= button_to "Submit", submit_expense_report_path(@expense_report), method: :post, class: "btn btn-info text-white" %>
+    <%= link_to "Edit", edit_expense_report_path(@expense_report), class: "btn btn-secondary" %>
+    <%= button_to "Delete", expense_report_path(@expense_report), method: :delete, data: { confirm: "Are you sure?" }, class: "btn btn-danger" %>
+  <% end %>
 <% end %>
 
 <%= link_to "Back", expense_reports_path, class: "btn btn-outline-dark" %>
+
+<% if current_user.manager? && @expense_report.submitted? %>
+  <%= button_to "Approve", approve_expense_report_path(@expense_report), method: :post, class: "btn btn-success" %>
+  <%= button_to "Reject", reject_expense_report_path(@expense_report), method: :post, class: "btn btn-danger" %>
+<% end %>

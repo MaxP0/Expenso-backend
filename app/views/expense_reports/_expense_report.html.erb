@@ -31,7 +31,9 @@
 
   <p>
     <strong>User:</strong>
-    <%= expense_report.user_id %>
+    <% if current_user.manager? %>
+      <%= expense_report.user&.email %>
+    <% end %>
   </p>
 
 </div>
