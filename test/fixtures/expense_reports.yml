@@ -2,18 +2,27 @@
 
 one:
   title: MyString
-  category: MyString
+  category: Travel
   amount: 9.99
   date: 2025-11-11
   description: MyText
-  status: 1
+  status: 0
   user: one
 
 two:
   title: MyString
-  category: MyString
+  category: Meals
   amount: 9.99
   date: 2025-11-11
   description: MyText
   status: 1
   user: two
+
+three:
+  title: MyString
+  category: Office Supplies
+  amount: 15.50
+  date: 2025-11-12
+  description: MyText
+  status: 1
+  user: one

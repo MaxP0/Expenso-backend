@@ -3,6 +3,8 @@ class User < ApplicationRecord
   # :confirmable, :lockable, :timeoutable, :trackable and :omniauthable
   devise :database_authenticatable, :registerable,
          :recoverable, :rememberable, :validatable
+
+  has_secure_token :api_token
   has_many :expense_reports, dependent: :destroy
 
   enum :role, { employee: 0, manager: 1 }

@@ -7,5 +7,12 @@
 #   ["Action", "Comedy", "Drama", "Horror"].each do |genre_name|
 #     MovieGenre.find_or_create_by!(name: genre_name)
 #   end
-User.create!(email: "employee@example.com", password: "password", role: :employee)
-User.create!(email: "manager@example.com", password: "password", role: :manager)
+employee = User.find_or_initialize_by(email: "employee@example.com")
+employee.password = "password" if employee.new_record?
+employee.role = :employee
+employee.save!
+
+manager = User.find_or_initialize_by(email: "manager@example.com")
+manager.password = "password" if manager.new_record?
+manager.role = :manager
+manager.save!

@@ -2,47 +2,90 @@ require "test_helper"
 
 class ExpenseReportsControllerTest < ActionDispatch::IntegrationTest
   setup do
-    @expense_report = expense_reports(:one)
+    @employee = users(:one)
+    @manager = users(:two)
+    @draft_report = expense_reports(:one)
+    @submitted_report = expense_reports(:three)
+    @manager_owned_report = expense_reports(:two)
   end
 
-  test "should get index" do
-    get expense_reports_url
+  test "employee sees only own reports" do
+    token = login_token_for(@employee)
+
+    get api_v1_expense_reports_url, headers: auth_header(token)
     assert_response :success
+
+    body = JSON.parse(response.body)
+    assert_equal 2, body.fetch("expense_reports").size
   end
 
-  test "should get new" do
-    get new_expense_report_url
+  test "manager sees all reports with owner" do
+    token = login_token_for(@manager)
+
+    get api_v1_expense_reports_url, headers: auth_header(token)
     assert_response :success
+
+    body = JSON.parse(response.body)
+    assert_equal 3, body.fetch("expense_reports").size
+    assert body.fetch("expense_reports").all? { |r| r.key?("owner") }
   end
 
-  test "should create expense_report" do
-    assert_difference("ExpenseReport.count") do
-      post expense_reports_url, params: { expense_report: { amount: @expense_report.amount, category: @expense_report.category, date: @expense_report.date, description: @expense_report.description, status: @expense_report.status, title: @expense_report.title, user_id: @expense_report.user_id } }
+  test "employee can create report" do
+    token = login_token_for(@employee)
+
+    assert_difference("ExpenseReport.count", 1) do
+      post api_v1_expense_reports_url,
+        headers: auth_header(token),
+        params: {
+          expense_report: {
+            title: "Taxi",
+            category: "Travel",
+            amount: 12.34,
+            date: "2025-12-01",
+            description: "Airport"
+          }
+        }
     end
 
-    assert_redirected_to expense_report_url(ExpenseReport.last)
+    assert_response :created
   end
 
-  test "should show expense_report" do
-    get expense_report_url(@expense_report)
+  test "employee can submit draft" do
+    token = login_token_for(@employee)
+
+    post submit_api_v1_expense_report_url(@draft_report), headers: auth_header(token)
     assert_response :success
+
+    @draft_report.reload
+    assert_equal "submitted", @draft_report.status
   end
 
-  test "should get edit" do
-    get edit_expense_report_url(@expense_report)
+  test "manager can approve submitted" do
+    token = login_token_for(@manager)
+
+    post approve_api_v1_expense_report_url(@submitted_report), headers: auth_header(token)
     assert_response :success
+
+    @submitted_report.reload
+    assert_equal "approved", @submitted_report.status
   end
 
-  test "should update expense_report" do
-    patch expense_report_url(@expense_report), params: { expense_report: { amount: @expense_report.amount, category: @expense_report.category, date: @expense_report.date, description: @expense_report.description, status: @expense_report.status, title: @expense_report.title, user_id: @expense_report.user_id } }
-    assert_redirected_to expense_report_url(@expense_report)
+  test "employee cannot access someone else's report" do
+    token = login_token_for(@employee)
+
+    get api_v1_expense_report_url(@manager_owned_report), headers: auth_header(token)
+    assert_response :forbidden
   end
 
-  test "should destroy expense_report" do
-    assert_difference("ExpenseReport.count", -1) do
-      delete expense_report_url(@expense_report)
-    end
+  private
 
-    assert_redirected_to expense_reports_url
+  def login_token_for(user)
+    post api_v1_auth_login_url, params: { email: user.email, password: "password123" }
+    assert_response :success
+    JSON.parse(response.body).fetch("token")
+  end
+
+  def auth_header(token)
+    { "Authorization" => "Bearer #{token}" }
   end
 end
