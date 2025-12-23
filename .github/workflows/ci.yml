@@ -10,10 +10,6 @@ jobs:
   test:
     runs-on: ubuntu-latest
 
-    defaults:
-      run:
-        working-directory: Expenso
-
     services:
       postgres:
         image: postgres:14
@@ -42,11 +38,10 @@ jobs:
         with:
           ruby-version: 3.3
           bundler-cache: true
-          working-directory: Expenso
 
       - name: Setup database
         run: |
-          bin/rails db:prepare
+          bundle exec rails db:prepare
 
       - name: Run tests
         run: bundle exec rspec
