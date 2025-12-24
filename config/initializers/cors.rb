@@ -1,9 +1,12 @@
 # frozen_string_literal: true
 
-# CORS for separate frontend (Vite dev server, etc.)
+# CORS for separate frontend (React on S3, Vite dev server)
 Rails.application.config.middleware.insert_before 0, Rack::Cors do
   allow do
-    origins ENV.fetch("FRONTEND_ORIGIN", "http://localhost:5173")
+    origins ENV.fetch(
+      "FRONTEND_ORIGIN",
+      "http://localhost:5173"
+    )
 
     resource "*",
       headers: :any,
