@@ -1,4 +1,8 @@
 Rails.application.routes.draw do
+  # Render / load balancer health checks
+  get "/up", to: proc { [200, { "content-type" => "text/plain" }, ["OK"]] }
+  root to: proc { [200, { "content-type" => "application/json" }, ['{"status":"ok"}']] }
+
   namespace :api do
     namespace :v1 do
       post "auth/login", to: "auth#login"
