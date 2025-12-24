@@ -79,6 +79,18 @@ Rails.application.configure do
   # Only use :id for inspections in production.
   config.active_record.attributes_for_inspect = [ :id ]
 
+  config.hosts.clear
+
+  # No realtime features
+  config.action_cable.mount_path = nil
+  config.action_cable.url = nil
+  config.action_cable.allowed_request_origins = []
+
+  # No background jobs
+  config.active_job.queue_adapter = :async
+
+  # No solid cache
+  config.cache_store = :memory_store
   # Enable DNS rebinding protection and other `Host` header attacks.
   # config.hosts = [
   #   "example.com",     # Allow requests from example.com
