@@ -8,21 +8,30 @@
 
 return unless ENV["AUTO_MIGRATE"] == "true"
 
-begin
-  require "rake"
+# Never run migrations during rake tasks/build steps (e.g. assets:precompile on Render).
+# We only want to run this in the actual web process at boot time.
+if defined?(Rake) && Rake.respond_to?(:application) && Rake.application&.top_level_tasks&.any?
+  return
+end
 
-  Rails.application.load_tasks
+Rails.application.config.after_initialize do
+  begin
+    require "rake"
 
-  Rails.logger.info("[auto_migrate] Running db:prepare")
-  Rake::Task["db:prepare"].invoke
+    Rails.application.load_tasks
 
-  if ENV["AUTO_SEED"] == "true"
-    Rails.logger.info("[auto_migrate] Running db:seed")
-    Rake::Task["db:seed"].invoke
+    Rails.logger.info("[auto_migrate] Running db:prepare")
+    Rake::Task["db:prepare"].invoke
+
+    if ENV["AUTO_SEED"] == "true"
+      Rails.application.eager_load!
+      Rails.logger.info("[auto_migrate] Running db:seed")
+      Rake::Task["db:seed"].invoke
+    end
+
+    Rails.logger.info("[auto_migrate] Done")
+  rescue StandardError => e
+    Rails.logger.error("[auto_migrate] Failed: #{e.class}: #{e.message}")
+    raise
   end
-
-  Rails.logger.info("[auto_migrate] Done")
-rescue StandardError => e
-  Rails.logger.error("[auto_migrate] Failed: #{e.class}: #{e.message}")
-  raise
 end
